@@ -120,6 +120,22 @@ class ElasticSearch {
     {
         return $this->call('_search?' . http_build_query(array('q' => $q)));
     }
+
+	function morelikethis($type, $id, $fields = FALSE, $data = false)
+    {
+		if($data != false && !$fields) {
+			return $this->call($type . '/'.$id.'/_mlt', 'GET', $data);
+		}
+		else if($data != false && $fields != false) {
+			return $this->call($type . '/'.$id.'/_mlt?'.$fields, 'POST', $data);
+		}
+		else if(!$fields) {
+        	return $this->call($type . '/'.$id.'/_mlt');
+		}
+		else {
+			return $this->call($type . '/'.$id.'/_mlt?'.$fields);
+		}
+    }
  
     function query_all_wresultSize($query, $size = 999)
     {

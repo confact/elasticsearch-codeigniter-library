@@ -54,9 +54,14 @@ class ElasticSearch {
  
     //curl -X PUT http://localhost:9200/{INDEX}/
     //this function is to create an index
-    function create()
+    function create($map = FALSE)
     {
-        $this->call(NULL, 'PUT');    
+    	if(!$map) {
+        $this->call(NULL, 'PUT');
+		} 
+		else {
+			$this->call(NULL, 'PUT', $map);
+		} 
     }
  
     //curl -X GET http://localhost:9200/{INDEX}/_status

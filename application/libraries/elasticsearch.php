@@ -12,7 +12,7 @@ class ElasticSearch {
 		$this -> index = $CI -> config -> item('index');
 	}
 
-	function call($path, $method = 'GET', $data = NULL) {
+	private function call($path, $method = 'GET', $data = NULL) {
 		if (!$this -> index)
 			throw new Exception('$this->index needs a value');
 

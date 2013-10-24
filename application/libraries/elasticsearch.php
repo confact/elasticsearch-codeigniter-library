@@ -110,6 +110,11 @@ class ElasticSearch {
     {
         return $this->call($type . '/_search?' . http_build_query(array('q' => $q, 'size' => $size)));
     }
+	
+	function get($type, $id)
+	{
+		return $this->call($type . '/'.$id, 'GET');
+	}
  
     function query_all($query)
     {

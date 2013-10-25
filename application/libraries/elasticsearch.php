@@ -1,125 +1,263 @@
 <?php
-if (!defined('BASEPATH'))
-	exit('No direct script access allowed');
+/**
+ * Elasticsearch Library
+ *
+ * @package OpenLibs
+ * 
+ */
+class ElasticSearch
+{
+    public $index;
 
-class ElasticSearch {
-	public $index;
+    /**
+     * constructor setting the config variables for server ip and index.
+     */
 
-	function __construct() {
-		$CI = &get_instance();
-		$CI -> config -> load("elasticsearch");
-		$this -> server = $CI -> config -> item('es_server');
-		$this -> index = $CI -> config -> item('index');
-	}
+    public function __construct()
+    {
+        $ci = &get_instance();
+        $ci -> config -> load("elasticsearch");
+        $this -> server = $ci -> config -> item('es_server');
+        $this -> index = $ci -> config -> item('index');
+    }
+    /**
+     * Handling the call for every function with curl
+     * 
+     * @param type $path
+     * @param type $method
+     * @param type $data
+     * 
+     * @return type
+     * @throws Exception
+     */
 
-	private function call($path, $method = 'GET', $data = NULL) {
-		if (!$this -> index)
-			throw new Exception('$this->index needs a value');
+    private function call($path, $method = 'GET', $data = null)
+    {
+        if (!$this -> index) {
+            throw new Exception('$this->index needs a value');
+        }
 
-		$url = $this -> server . '/' . $this -> index . '/' . $path;
+        $url = $this -> server . '/' . $this -> index . '/' . $path;
 
-		$headers = array('Accept: application/json', 'Content-Type: application/json', );
+        $headers = array('Accept: application/json', 'Content-Type: application/json', );
 
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-		switch($method) {
-			case 'GET' :
-				break;
-			case 'POST' :
-				curl_setopt($ch, CURLOPT_POST, true);
-				curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-				break;
-			case 'PUT' :
-				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
-				curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-				break;
-			case 'DELETE' :
-				curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-				break;
-		}
+        switch($method) {
+            case 'GET' :
+                break;
+            case 'POST' :
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+                break;
+            case 'PUT' :
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                break;
+            case 'DELETE' :
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                break;
+        }
 
-		$response = curl_exec($ch);
-		$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $response = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-		return json_decode($response, true);
-	}
+        return json_decode($response, true);
+    }
 
-	//curl -X PUT http://localhost:9200/{INDEX}/
-	//this function is to create an index
-	function create($map = FALSE) {
-		if (!$map) {
-			$this -> call(NULL, 'PUT');
-		} else {
-			$this -> call(NULL, 'PUT', $map);
-		}
-	}
 
-	//curl -X GET http://localhost:9200/{INDEX}/_status
-	function status() {
-		return $this -> call('_status');
-	}
+    /**
+     * create a index with mapping or not
+     * 
+     * @param json $map
+     */
 
-	//curl -X GET http://localhost:9200/{INDEX}/{TYPE}/_count -d {matchAll:{}}
-	function count($type) {
-		return $this -> call($type . '/_count?' . http_build_query(array(NULL => '{matchAll:{}}')));
-	}
+    public function create($map = false)
+    {
+        if (!$map) {
+            $this -> call(null, 'PUT');
+        } else {
+            $this -> call(null, 'PUT', $map);
+        }
+    }
 
-	//curl -X PUT http://localhost:9200/{INDEX}/{TYPE}/_mapping -d ...
-	function map($type, $data) {
-		return $this -> call($type . '/_mapping', 'PUT', $data);
-	}
+    /**
+     * get status
+     * 
+     * @return array
+     */
 
-	//curl -X PUT http://localhost:9200/{INDEX}/{TYPE}/{ID} -d ...
-	function add($type, $id, $data) {
-		return $this -> call($type . '/' . $id, 'PUT', $data);
-	}
+    public function status()
+    {
+        return $this -> call('_status');
+    }
 
-	//curl -X DELETE http://localhost:9200/{INDEX}/
-	//delete an indexed item by ID
-	function delete($type, $id) {
-		return $this -> call($type . '/' . $id, 'DELETE');
-	}
+    /**
+     * count how many indexes it exists
+     * 
+     * @param string $type
+     * 
+     * @return array
+     */
 
-	//curl -X GET http://localhost:9200/{INDEX}/{TYPE}/_search?q= ...
-	function query($type, $q) {
-		return $this -> call($type . '/_search?' . http_build_query(array('q' => $q)));
-	}
+    public function count($type)
+    {
+        return $this -> call($type . '/_count?' . http_build_query(array(null => '{matchAll:{}}')));
+    }
 
-	function advancedquery($type, $query) {
-		return $this -> call($type . '/_search', 'POST', $query);
-	}
+    /**
+     * set the mapping for the index
+     * 
+     * @param string $type
+     * @param json   $data
+     * 
+     * @return array
+     */
 
-	function query_wresultSize($type, $query, $size = 999) {
-		return $this -> call($type . '/_search?' . http_build_query(array('q' => $q, 'size' => $size)));
-	}
+    public function map($type, $data)
+    {
+        return $this -> call($type . '/_mapping', 'PUT', $data);
+    }
 
-	function get($type, $id) {
-		return $this -> call($type . '/' . $id, 'GET');
-	}
+    /**
+     * set the mapping for the index
+     * 
+     * @param type $type
+     * @param type $id
+     * @param type $data
+     * 
+     * @return type
+     */
 
-	function query_all($query) {
-		return $this -> call('_search?' . http_build_query(array('q' => $q)));
-	}
+    public function add($type, $id, $data)
+    {
+        return $this -> call($type . '/' . $id, 'PUT', $data);
+    }
 
-	function morelikethis($type, $id, $fields = FALSE, $data = false) {
-		if ($data != false && !$fields) {
-			return $this -> call($type . '/' . $id . '/_mlt', 'GET', $data);
-		} else if ($data != false && $fields != false) {
-			return $this -> call($type . '/' . $id . '/_mlt?' . $fields, 'POST', $data);
-		} else if (!$fields) {
-			return $this -> call($type . '/' . $id . '/_mlt');
-		} else {
-			return $this -> call($type . '/' . $id . '/_mlt?' . $fields);
-		}
-	}
+    /**
+     * delete a index
+     * 
+     * @param type $type 
+     * @param type $id 
+     * 
+     * @return type 
+     */
 
-	function query_all_wresultSize($query, $size = 999) {
-		return $this -> call('_search?' . http_build_query(array('q' => $q, 'size' => $size)));
-	}
+    public function delete($type, $id)
+    {
+        return $this -> call($type . '/' . $id, 'DELETE');
+    }
+
+    /**
+     * make a simple search query
+     * 
+     * @param type $type
+     * @param type $q
+     * 
+     * @return type
+     */
+
+    public function query($type, $q)
+    {
+        return $this -> call($type . '/_search?' . http_build_query(array('q' => $q)));
+    }
+
+    /**
+     * make a advanced search query with json data to send
+     * 
+     * @param type $type
+     * @param type $query
+     * 
+     * @return type
+     */
+
+    public function advancedquery($type, $query)
+    {
+        return $this -> call($type . '/_search', 'POST', $query);
+    }
+
+    /**
+     * make a search query with result sized set
+     * 
+     * @param string  $type  what kind of type of index you want to search
+     * @param string  $query the query as a string
+     * @param integer $size  The size of the results
+     * 
+     * @return array
+     */
+
+    public function query_wresultSize($type, $query, $size = 999)
+    {
+        return $this -> call($type . '/_search?' . http_build_query(array('q' => $q, 'size' => $size)));
+    }
+
+    /**
+     * get one index via the id
+     * 
+     * @param string  $type The index type
+     * @param integer $id   the indentifier for a index
+     * 
+     * @return type
+     */
+
+    public function get($type, $id)
+    {
+        return $this -> call($type . '/' . $id, 'GET');
+    }
+
+    /**
+     * Query the whole server
+     * 
+     * @param type $query
+     * 
+     * @return type
+     */
+
+    public function query_all($query)
+    {
+        return $this -> call('_search?' . http_build_query(array('q' => $query)));
+    }
+
+    /**
+     * get similar indexes for one index specified by id - send data to add filters or more
+     * 
+     * @param string  $type
+     * @param integer $id
+     * @param string  $fields
+     * @param string  $data 
+     * 
+     * @return array 
+     */
+
+    public function morelikethis($type, $id, $fields = false, $data = false)
+    {
+        if ($data != false && !$fields) {
+            return $this -> call($type . '/' . $id . '/_mlt', 'GET', $data);
+        } else if ($data != false && $fields != false) {
+            return $this -> call($type . '/' . $id . '/_mlt?' . $fields, 'POST', $data);
+        } else if (!$fields) {
+            return $this -> call($type . '/' . $id . '/_mlt');
+        } else {
+            return $this -> call($type . '/' . $id . '/_mlt?' . $fields);
+        }
+    }
+
+    /**
+     * make a search query with result sized set
+     * 
+     * @param type $query
+     * @param type $size
+     * 
+     * @return type
+     */
+    public function query_all_wresultSize($query, $size = 999)
+    {
+        return $this -> call('_search?' . http_build_query(array('q' => $query, 'size' => $size)));
+    }
 
 }

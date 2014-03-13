@@ -9,7 +9,6 @@ You create data in an array to pass it to elasticsearch. You probably want to sp
 
 	$id = 1337;
 	$data = array("name"=>"nisse", "age"=>"14", "sex"=>"male");
-	var_dump($this->elasticsearch->add("people", $id, json_encode($data)));
+	var_dump($this->elasticsearch->add("people", $id, $data));
 	
-This will save the array to the elasticsearch. elasticsearch wants it to be JSON and that's why i do json_encode.
-"people" is the collection, the index where you want to save it.
+This will save the array to the elasticsearch. "people" is the collection, the index where you want to save it.

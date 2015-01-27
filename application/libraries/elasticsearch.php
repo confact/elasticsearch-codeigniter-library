@@ -260,4 +260,16 @@ class ElasticSearch
         return $this -> call('_search?' . http_build_query(array('q' => $query, 'size' => $size)));
     }
 
+    /**
+     * make a suggest query based on similar looking terms
+     * 
+     * @param type $query
+     * 
+     * @return array
+     */
+    public function suggest($query)
+    {
+        return $this -> call('_suggest', 'POST', $query);
+    }
+
 }

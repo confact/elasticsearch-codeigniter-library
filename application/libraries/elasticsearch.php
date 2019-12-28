@@ -16,9 +16,9 @@ class ElasticSearch
     public function __construct()
     {
         $ci = &get_instance();
-        $ci -> config -> load("elasticsearch");
-        $this -> server = $ci -> config -> item('es_server');
-        $this -> index = $ci -> config -> item('index');
+        $ci->config->load("elasticsearch");
+        $this->server = $ci->config->item('es_server');
+        $this->index = $ci->config->item('index');
     }
     /**
      * Handling the call for every function with curl
@@ -33,11 +33,11 @@ class ElasticSearch
 
     private function call($path, $method = 'GET', $data = null)
     {
-        if (!$this -> index) {
+        if (!$this->index) {
             throw new Exception('$this->index needs a value');
         }
 
-        $url = $this -> server . '/' . $this -> index . '/' . $path;
+        $url = $this->server . '/' . $this->index . '/' . $path;
 
         $headers = array('Accept: application/json', 'Content-Type: application/json', );
 
@@ -75,15 +75,18 @@ class ElasticSearch
      * create a index with mapping or not
      * 
      * @param json $map
+     * 
+     * @return array
      */
 
     public function create($map = false)
     {
-        if (!$map) {
-            $this -> call(null, 'PUT');
-        } else {
-            $this -> call(null, 'PUT', $map);
-        }
+        if (!$map)
+		{
+			return $this->_call(null, 'PUT');
+		}
+
+		return $this->_call(null, 'PUT', $map);
     }
 
     /**
@@ -94,7 +97,7 @@ class ElasticSearch
 
     public function status()
     {
-        return $this -> call('_status');
+        return $this->call('_status');
     }
 
     /**
@@ -107,7 +110,7 @@ class ElasticSearch
 
     public function count($type)
     {
-        return $this -> call($type . '/_count?' . http_build_query(array(null => '{matchAll:{}}')));
+        return $this->call($type . '/_count?' . http_build_query(array(null => '{matchAll:{}}')));
     }
 
     /**
@@ -121,7 +124,7 @@ class ElasticSearch
 
     public function map($type, $data)
     {
-        return $this -> call($type . '/_mapping', 'PUT', $data);
+        return $this->call($type . '/_mapping', 'PUT', $data);
     }
 
     /**
@@ -136,7 +139,7 @@ class ElasticSearch
 
     public function add($type, $id, $data)
     {
-        return $this -> call($type . '/' . $id, 'PUT', $data);
+        return $this->call($type . '/' . $id, 'PUT', $data);
     }
 
     /**
@@ -150,7 +153,7 @@ class ElasticSearch
 
     public function delete($type, $id)
     {
-        return $this -> call($type . '/' . $id, 'DELETE');
+        return $this->call($type . '/' . $id, 'DELETE');
     }
 
     /**
@@ -164,7 +167,7 @@ class ElasticSearch
 
     public function query($type, $q)
     {
-        return $this -> call($type . '/_search?' . http_build_query(array('q' => $q)));
+        return $this->call($type . '/_search?' . http_build_query(array('q' => $q)));
     }
 
     /**
@@ -178,7 +181,7 @@ class ElasticSearch
 
     public function advancedquery($type, $query)
     {
-        return $this -> call($type . '/_search', 'POST', $query);
+        return $this->call($type . '/_search', 'POST', $query);
     }
 
     /**
@@ -193,7 +196,7 @@ class ElasticSearch
 
     public function query_wresultSize($type, $query, $size = 999)
     {
-        return $this -> call($type . '/_search?' . http_build_query(array('q' => $q, 'size' => $size)));
+        return $this->call($type . '/_search?' . http_build_query(array('q' => $query, 'size' => $size)));
     }
 
     /**
@@ -207,7 +210,7 @@ class ElasticSearch
 
     public function get($type, $id)
     {
-        return $this -> call($type . '/' . $id, 'GET');
+        return $this->call($type . '/' . $id, 'GET');
     }
 
     /**
@@ -220,16 +223,16 @@ class ElasticSearch
 
     public function query_all($query)
     {
-        return $this -> call('_search?' . http_build_query(array('q' => $query)));
+        return $this->call('_search?' . http_build_query(array('q' => $query)));
     }
 
     /**
      * get similar indexes for one index specified by id - send data to add filters or more
      * 
-     * @param string  $type
-     * @param integer $id
-     * @param string  $fields
-     * @param string  $data 
+     * @param string      $type
+     * @param integer     $id
+	 * @param string|bool $fields
+	 * @param string|bool $data
      * 
      * @return array 
      */
@@ -237,13 +240,13 @@ class ElasticSearch
     public function morelikethis($type, $id, $fields = false, $data = false)
     {
         if ($data != false && !$fields) {
-            return $this -> call($type . '/' . $id . '/_mlt', 'GET', $data);
+            return $this->call($type . '/' . $id . '/_mlt', 'GET', $data);
         } else if ($data != false && $fields != false) {
-            return $this -> call($type . '/' . $id . '/_mlt?' . $fields, 'POST', $data);
+            return $this->call($type . '/' . $id . '/_mlt?' . $fields, 'POST', $data);
         } else if (!$fields) {
-            return $this -> call($type . '/' . $id . '/_mlt');
+            return $this->call($type . '/' . $id . '/_mlt');
         } else {
-            return $this -> call($type . '/' . $id . '/_mlt?' . $fields);
+            return $this->call($type . '/' . $id . '/_mlt?' . $fields);
         }
     }
 
@@ -257,7 +260,7 @@ class ElasticSearch
      */
     public function query_all_wresultSize($query, $size = 999)
     {
-        return $this -> call('_search?' . http_build_query(array('q' => $query, 'size' => $size)));
+        return $this->call('_search?' . http_build_query(array('q' => $query, 'size' => $size)));
     }
 
     /**
@@ -269,7 +272,7 @@ class ElasticSearch
      */
     public function suggest($query)
     {
-        return $this -> call('_suggest', 'POST', $query);
+        return $this->call('_suggest', 'POST', $query);
     }
 
 }
